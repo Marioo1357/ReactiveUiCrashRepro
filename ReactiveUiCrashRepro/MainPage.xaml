@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<reactive:ReactiveContentPage
+    x:Class="ReactiveUiCrashRepro.MainPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:core="clr-namespace:ReactiveUiCrashRepro"
+    xmlns:reactive="clr-namespace:ReactiveUI.Maui;assembly=ReactiveUI.Maui"
+    x:DataType="core:MainPageViewModel"
+    x:TypeArguments="core:MainPageViewModel">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="30,0"
+            Spacing="25">
+            <Image
+                Aspect="AspectFit"
+                HeightRequest="185"
+                SemanticProperties.Description="dot net bot in a submarine number ten"
+                Source="dotnet_bot.png" />
+
+            <Label
+                SemanticProperties.HeadingLevel="Level1"
+                Style="{StaticResource Headline}"
+                Text="Hello, World!" />
+
+            <Label
+                SemanticProperties.Description="Welcome to dot net Multi platform App U I"
+                SemanticProperties.HeadingLevel="Level2"
+                Style="{StaticResource SubHeadline}"
+                Text="Welcome to &#10;.NET Multi-platform App UI" />
+
+            <Button
+                Command="{Binding ClickCommand1, Mode=OneTime}"
+                HorizontalOptions="Fill"
+                Text="Button 1" />
+
+            <Button
+                Command="{Binding ClickCommand2, Mode=OneTime}"
+                HorizontalOptions="Fill"
+                Text="Button 2" />
+        </VerticalStackLayout>
+    </ScrollView>
+
+</reactive:ReactiveContentPage>
