@@ -10,9 +10,14 @@
     x:TypeArguments="core:MainPageViewModel">
 
     <!--
-        Layout: content fills the top row; the standalone NativeTabBar sits at the bottom.
+        Layout: content fills the top row; the tab bar sits at the bottom.
         The tab bar does NOT drive navigation — bind SelectedIndex in your VM to react to
         selection changes and swap content yourself.
+
+        Platform logic (see code-behind):
+          • iOS 26+   → NativeTabBar  (native UITabBar with automatic Liquid Glass)
+          • iOS < 26  → MauiGlassTabBar (pure MAUI frosted-glass look-alike)
+          • Android   → MauiGlassTabBar
     -->
     <Grid RowDefinitions="*, Auto">
 
@@ -58,19 +63,12 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- ── Standalone NativeTabBar ──────────────────────────── -->
+        <!-- ── Tab bar placeholder ──────────────────────────────── -->
         <!--
-            iOS  : UITabBar with system blur / Liquid Glass (iOS 26+ automatic).
-            Android: BottomNavigationView with frosted-glass Material surface.
-
-            Icon names:
-              iOS     → SF Symbol names (e.g. "house.fill", "magnifyingglass")
-              Android → drawable resource names placed in Platforms/Android/Resources/drawable/
+            The actual control (NativeTabBar or MauiGlassTabBar) is injected in
+            code-behind based on platform and OS version.  See MainPage.xaml.cs.
         -->
-        <controls:NativeTabBar
-            Grid.Row="1"
-            Items="{Binding TabItems}"
-            SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}" />
+        <ContentView x:Name="TabBarContainer" Grid.Row="1" />
 
     </Grid>
 
