@@ -1,0 +1,419 @@
+using Microsoft.Maui.Controls.Shapes;
+
+namespace ReactiveUiCrashRepro.Controls;
+
+/// <summary>
+/// A pure-MAUI tab bar that mimics the iOS 26 Liquid Glass appearance.
+/// <para>
+/// Used on <b>Android</b> (always) and on <b>iOS&lt;26</b> (where the native Liquid
+/// Glass material is not available).  The control renders entirely with MAUI
+/// components – no platform-specific code is required.
+/// </para>
+/// <para>
+/// Visual design:
+/// <list type="bullet">
+///   <item>Semi-transparent frosted-glass background with a subtle gradient.</item>
+///   <item>Rounded pill container with a thin glass-edge stroke and a soft shadow.</item>
+///   <item>Selected tab highlighted with an accent-colour pill and colour-tinted icon.</item>
+///   <item>Badge support (red circle with count).</item>
+/// </list>
+/// </para>
+/// <para>
+/// <b>Icons</b> – each <see cref="TabItem"/> can provide icons in several ways
+/// (checked in this order):
+/// <list type="number">
+///   <item><see cref="TabItem.IconGeometry"/> – SVG path data rendered as a
+///         <c>Shapes.Path</c> with full fill-colour control.</item>
+///   <item><see cref="TabItem.MauiIconSource"/> – any MAUI <c>ImageSource</c>
+///         (file, font-glyph, URI).</item>
+///   <item><see cref="TabItem.Icon"/> – treated as a <c>FileImageSource</c> filename.</item>
+/// </list>
+/// </para>
+/// </summary>
+public class MauiGlassTabBar : ContentView
+{
+    // ── Bindable properties ─────────────────────────────────────────────────
+
+    public static readonly BindableProperty ItemsProperty =
+        BindableProperty.Create(
+            nameof(Items),
+            typeof(IList<TabItem>),
+            typeof(MauiGlassTabBar),
+            defaultValue: null,
+            propertyChanged: (b, _, _) => ((MauiGlassTabBar)b).RebuildTabs());
+
+    public static readonly BindableProperty SelectedIndexProperty =
+        BindableProperty.Create(
+            nameof(SelectedIndex),
+            typeof(int),
+            typeof(MauiGlassTabBar),
+            defaultValue: 0,
+            defaultBindingMode: BindingMode.TwoWay,
+            propertyChanged: (b, o, n) =>
+                ((MauiGlassTabBar)b).OnSelectedIndexChanged((int)o, (int)n));
+
+    public static readonly BindableProperty AccentColorProperty =
+        BindableProperty.Create(
+            nameof(AccentColor),
+            typeof(Color),
+            typeof(MauiGlassTabBar),
+            defaultValue: Color.FromArgb("#007AFF"),
+            propertyChanged: (b, _, _) => ((MauiGlassTabBar)b).UpdateSelectionVisuals());
+
+    // ── Public API ───────────────────────────────────────────────────────────
+
+    /// <summary>The tab items to display.</summary>
+    public IList<TabItem>? Items
+    {
+        get => (IList<TabItem>?)GetValue(ItemsProperty);
+        set => SetValue(ItemsProperty, value);
+    }
+
+    /// <summary>Zero-based index of the currently selected tab.</summary>
+    public int SelectedIndex
+    {
+        get => (int)GetValue(SelectedIndexProperty);
+        set => SetValue(SelectedIndexProperty, value);
+    }
+
+    /// <summary>
+    /// Accent colour for the selected tab icon and label.
+    /// Defaults to iOS system blue (<c>#007AFF</c>).
+    /// </summary>
+    public Color AccentColor
+    {
+        get => (Color)GetValue(AccentColorProperty);
+        set => SetValue(AccentColorProperty, value);
+    }
+
+    /// <summary>Raised when the user taps a tab.</summary>
+    public event EventHandler<TabItemSelectedEventArgs>? TabItemSelected;
+
+    // ── Private state ────────────────────────────────────────────────────────
+
+    private readonly Grid _tabGrid;
+    private readonly List<TabViewState> _tabStates = new();
+
+    // Colours resolved for the current app theme.
+    private Color _unselectedColor = Color.FromArgb("#8E8E93");
+    private Brush _glassBrush = Brush.Transparent;
+    private Color _glassStroke = Colors.Transparent;
+
+    // ── Constructor ──────────────────────────────────────────────────────────
+
+    public MauiGlassTabBar()
+    {
+        _tabGrid = new Grid
+        {
+            ColumnSpacing = 4,
+            HorizontalOptions = LayoutOptions.Fill,
+            VerticalOptions = LayoutOptions.Center,
+        };
+
+        ResolveThemeColors();
+        BuildLayout();
+
+        // Re-resolve colours when the theme changes at runtime.
+        if (Application.Current != null)
+            Application.Current.RequestedThemeChanged += (_, _) =>
+            {
+                ResolveThemeColors();
+                RefreshGlassBorder();
+                UpdateSelectionVisuals();
+            };
+    }
+
+    // ── Layout ───────────────────────────────────────────────────────────────
+
+    private Border? _glassBorder;
+
+    private void BuildLayout()
+    {
+        _glassBorder = new Border
+        {
+            StrokeShape = new RoundRectangle { CornerRadius = 26 },
+            Stroke = new SolidColorBrush(_glassStroke),
+            StrokeThickness = 1,
+            Background = _glassBrush,
+            Shadow = new Shadow
+            {
+                Brush = Colors.Black,
+                Opacity = 0.12f,
+                Radius = 14,
+                Offset = new Point(0, -2),
+            },
+            Padding = new Thickness(8, 6),
+            Margin = new Thickness(12, 0, 12, 6),
+            Content = _tabGrid,
+        };
+
+        Content = _glassBorder;
+    }
+
+    private void RefreshGlassBorder()
+    {
+        if (_glassBorder == null) return;
+        _glassBorder.Background = _glassBrush;
+        _glassBorder.Stroke = new SolidColorBrush(_glassStroke);
+    }
+
+    // ── Theme helpers ────────────────────────────────────────────────────────
+
+    private void ResolveThemeColors()
+    {
+        bool isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
+
+        _unselectedColor = isDark
+            ? Color.FromArgb("#98989E")
+            : Color.FromArgb("#8E8E93");
+
+        _glassBrush = isDark
+            ? new LinearGradientBrush
+            {
+                StartPoint = new Point(0, 0),
+                EndPoint = new Point(0, 1),
+                GradientStops = new GradientStopCollection
+                {
+                    new GradientStop(Color.FromArgb("#D02A2A30"), 0f),
+                    new GradientStop(Color.FromArgb("#C81E1E24"), 1f),
+                },
+            }
+            : new LinearGradientBrush
+            {
+                StartPoint = new Point(0, 0),
+                EndPoint = new Point(0, 1),
+                GradientStops = new GradientStopCollection
+                {
+                    new GradientStop(Color.FromArgb("#DEF0F4F8"), 0f),
+                    new GradientStop(Color.FromArgb("#D0E4E8EE"), 1f),
+                },
+            };
+
+        _glassStroke = isDark
+            ? Color.FromArgb("#20FFFFFF")
+            : Color.FromArgb("#40FFFFFF");
+    }
+
+    // ── Tab building ─────────────────────────────────────────────────────────
+
+    private void RebuildTabs()
+    {
+        _tabGrid.Children.Clear();
+        _tabGrid.ColumnDefinitions.Clear();
+        _tabStates.Clear();
+
+        var items = Items;
+        if (items == null || items.Count == 0) return;
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            _tabGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+
+            var state = CreateTabView(items[i], i);
+            Grid.SetColumn(state.Pill, i);
+            _tabGrid.Children.Add(state.Pill);
+            _tabStates.Add(state);
+        }
+
+        UpdateSelectionVisuals();
+    }
+
+    private TabViewState CreateTabView(TabItem item, int index)
+    {
+        bool isSelected = index == SelectedIndex;
+        Color iconColor = isSelected ? AccentColor : _unselectedColor;
+
+        // ── Icon ─────────────────────────────────────────────────────────────
+        View icon = CreateIcon(item, iconColor);
+
+        // ── Badge ────────────────────────────────────────────────────────────
+        View iconWithBadge;
+        Border? badge = null;
+        if (item.BadgeCount > 0)
+        {
+            badge = new Border
+            {
+                StrokeShape = new RoundRectangle { CornerRadius = 8 },
+                Background = new SolidColorBrush(Colors.Red),
+                StrokeThickness = 0,
+                Padding = new Thickness(4, 1),
+                HorizontalOptions = LayoutOptions.End,
+                VerticalOptions = LayoutOptions.Start,
+                Margin = new Thickness(0, -4, -6, 0),
+                Content = new Label
+                {
+                    Text = item.BadgeCount.ToString(),
+                    TextColor = Colors.White,
+                    FontSize = 9,
+                    HorizontalTextAlignment = TextAlignment.Center,
+                },
+            };
+
+            var badgeGrid = new Grid
+            {
+                HorizontalOptions = LayoutOptions.Center,
+                Children = { icon, badge },
+            };
+            iconWithBadge = badgeGrid;
+        }
+        else
+        {
+            iconWithBadge = icon;
+        }
+
+        // ── Label ────────────────────────────────────────────────────────────
+        var label = new Label
+        {
+            Text = item.Title,
+            FontSize = 10,
+            HorizontalOptions = LayoutOptions.Center,
+            HorizontalTextAlignment = TextAlignment.Center,
+            TextColor = isSelected ? AccentColor : _unselectedColor,
+        };
+
+        // ── Stack (icon + label) ─────────────────────────────────────────────
+        var stack = new VerticalStackLayout
+        {
+            Spacing = 2,
+            HorizontalOptions = LayoutOptions.Center,
+            VerticalOptions = LayoutOptions.Center,
+            Children = { iconWithBadge, label },
+        };
+
+        // ── Selection pill ───────────────────────────────────────────────────
+        var pill = new Border
+        {
+            StrokeShape = new RoundRectangle { CornerRadius = 18 },
+            Stroke = Brush.Transparent,
+            StrokeThickness = 0,
+            Background = isSelected
+                ? new SolidColorBrush(AccentColor.WithAlpha(0.12f))
+                : Brush.Transparent,
+            Padding = new Thickness(6, 8),
+            Content = stack,
+        };
+
+        // ── Tap handler ──────────────────────────────────────────────────────
+        var tap = new TapGestureRecognizer();
+        int capturedIndex = index;
+        tap.Tapped += (_, _) => SelectTab(capturedIndex);
+        pill.GestureRecognizers.Add(tap);
+
+        return new TabViewState
+        {
+            Pill = pill,
+            Icon = icon,
+            Label = label,
+            Badge = badge,
+        };
+    }
+
+    private static View CreateIcon(TabItem item, Color color)
+    {
+        // 1) Prefer IconGeometry (SVG path data → Shapes.Path with fill-colour control).
+        if (!string.IsNullOrEmpty(item.IconGeometry))
+        {
+            var converter = new PathGeometryConverter();
+            var geometry = (Geometry?)converter.ConvertFromInvariantString(item.IconGeometry);
+
+            return new Microsoft.Maui.Controls.Shapes.Path
+            {
+                Data = geometry,
+                Fill = new SolidColorBrush(color),
+                WidthRequest = 24,
+                HeightRequest = 24,
+                Aspect = Stretch.Uniform,
+                HorizontalOptions = LayoutOptions.Center,
+            };
+        }
+
+        // 2) MauiIconSource (any ImageSource – file, font-glyph, URI).
+        if (item.MauiIconSource != null)
+        {
+            return new Image
+            {
+                Source = item.MauiIconSource,
+                WidthRequest = 24,
+                HeightRequest = 24,
+                HorizontalOptions = LayoutOptions.Center,
+            };
+        }
+
+        // 3) Fallback: treat Icon string as a filename.
+        if (!string.IsNullOrEmpty(item.Icon))
+        {
+            return new Image
+            {
+                Source = item.Icon,
+                WidthRequest = 24,
+                HeightRequest = 24,
+                HorizontalOptions = LayoutOptions.Center,
+            };
+        }
+
+        // 4) Nothing – invisible placeholder.
+        return new BoxView { WidthRequest = 24, HeightRequest = 24, Color = Colors.Transparent };
+    }
+
+    // ── Selection ────────────────────────────────────────────────────────────
+
+    private void SelectTab(int index)
+    {
+        SelectedIndex = index;
+        TabItemSelected?.Invoke(this, new TabItemSelectedEventArgs(index));
+    }
+
+    private void OnSelectedIndexChanged(int oldIndex, int newIndex)
+    {
+        UpdateSelectionVisuals(oldIndex, newIndex);
+    }
+
+    /// <summary>Updates visuals for all tabs (used when accent colour or theme changes).</summary>
+    private void UpdateSelectionVisuals()
+    {
+        for (int i = 0; i < _tabStates.Count; i++)
+        {
+            bool isSelected = i == SelectedIndex;
+            ApplyTabVisualState(_tabStates[i], isSelected);
+        }
+    }
+
+    /// <summary>Updates visuals only for the old and new selected tabs.</summary>
+    private void UpdateSelectionVisuals(int oldIndex, int newIndex)
+    {
+        if (oldIndex >= 0 && oldIndex < _tabStates.Count)
+            ApplyTabVisualState(_tabStates[oldIndex], isSelected: false);
+
+        if (newIndex >= 0 && newIndex < _tabStates.Count)
+            ApplyTabVisualState(_tabStates[newIndex], isSelected: true);
+    }
+
+    private void ApplyTabVisualState(TabViewState state, bool isSelected)
+    {
+        Color iconColor = isSelected ? AccentColor : _unselectedColor;
+
+        // Pill background
+        state.Pill.Background = isSelected
+            ? new SolidColorBrush(AccentColor.WithAlpha(0.12f))
+            : Brush.Transparent;
+
+        // Icon colour
+        if (state.Icon is Microsoft.Maui.Controls.Shapes.Path path)
+            path.Fill = new SolidColorBrush(iconColor);
+        else if (state.Icon is Image img)
+            img.Opacity = isSelected ? 1.0 : 0.55;
+
+        // Label colour
+        state.Label.TextColor = iconColor;
+    }
+
+    // ── Helper types ─────────────────────────────────────────────────────────
+
+    private sealed class TabViewState
+    {
+        public required Border Pill { get; init; }
+        public required View Icon { get; init; }
+        public required Label Label { get; init; }
+        public Border? Badge { get; init; }
+    }
+}
