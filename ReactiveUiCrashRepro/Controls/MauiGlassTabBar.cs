@@ -60,6 +60,38 @@ public partial class MauiGlassTabBar : ContentView
             defaultValue: Color.FromArgb("#007AFF"),
             propertyChanged: (b, _, _) => ((MauiGlassTabBar)b).UpdateSelectionVisuals());
 
+    public static readonly BindableProperty IconColorProperty =
+        BindableProperty.Create(
+            nameof(IconColor),
+            typeof(Color),
+            typeof(MauiGlassTabBar),
+            defaultValue: null,
+            propertyChanged: (b, _, _) => ((MauiGlassTabBar)b).UpdateSelectionVisuals());
+
+    public static readonly BindableProperty SelectedIconColorProperty =
+        BindableProperty.Create(
+            nameof(SelectedIconColor),
+            typeof(Color),
+            typeof(MauiGlassTabBar),
+            defaultValue: null,
+            propertyChanged: (b, _, _) => ((MauiGlassTabBar)b).UpdateSelectionVisuals());
+
+    public static readonly BindableProperty TextColorProperty =
+        BindableProperty.Create(
+            nameof(TextColor),
+            typeof(Color),
+            typeof(MauiGlassTabBar),
+            defaultValue: null,
+            propertyChanged: (b, _, _) => ((MauiGlassTabBar)b).UpdateSelectionVisuals());
+
+    public static readonly BindableProperty SelectedTextColorProperty =
+        BindableProperty.Create(
+            nameof(SelectedTextColor),
+            typeof(Color),
+            typeof(MauiGlassTabBar),
+            defaultValue: null,
+            propertyChanged: (b, _, _) => ((MauiGlassTabBar)b).UpdateSelectionVisuals());
+
     // ── Public API ───────────────────────────────────────────────────────────
 
     /// <summary>The tab items to display.</summary>
@@ -77,13 +109,54 @@ public partial class MauiGlassTabBar : ContentView
     }
 
     /// <summary>
-    /// Accent colour for the selected tab icon and label.
-    /// Defaults to iOS system blue (<c>#007AFF</c>).
+    /// General accent colour used for the selected tab pill highlight and as the
+    /// default for <see cref="SelectedIconColor"/> and <see cref="SelectedTextColor"/>
+    /// when they are not explicitly set.  Defaults to iOS system blue (<c>#007AFF</c>).
     /// </summary>
     public Color AccentColor
     {
         get => (Color)GetValue(AccentColorProperty);
         set => SetValue(AccentColorProperty, value);
+    }
+
+    /// <summary>
+    /// Colour for unselected tab icons.  When <c>null</c> (the default) a
+    /// theme-appropriate grey is used.
+    /// </summary>
+    public Color? IconColor
+    {
+        get => (Color?)GetValue(IconColorProperty);
+        set => SetValue(IconColorProperty, value);
+    }
+
+    /// <summary>
+    /// Colour for the selected tab icon.  When <c>null</c> (the default)
+    /// <see cref="AccentColor"/> is used.
+    /// </summary>
+    public Color? SelectedIconColor
+    {
+        get => (Color?)GetValue(SelectedIconColorProperty);
+        set => SetValue(SelectedIconColorProperty, value);
+    }
+
+    /// <summary>
+    /// Colour for unselected tab labels.  When <c>null</c> (the default) a
+    /// theme-appropriate grey is used.
+    /// </summary>
+    public Color? TextColor
+    {
+        get => (Color?)GetValue(TextColorProperty);
+        set => SetValue(TextColorProperty, value);
+    }
+
+    /// <summary>
+    /// Colour for the selected tab label.  When <c>null</c> (the default)
+    /// <see cref="AccentColor"/> is used.
+    /// </summary>
+    public Color? SelectedTextColor
+    {
+        get => (Color?)GetValue(SelectedTextColorProperty);
+        set => SetValue(SelectedTextColorProperty, value);
     }
 
     /// <summary>Raised when the user taps a tab.</summary>
@@ -93,8 +166,8 @@ public partial class MauiGlassTabBar : ContentView
 
     private readonly List<TabViewState> _tabStates = new();
 
-    // Colours resolved for the current app theme.
-    private Color _unselectedColor = Color.FromArgb("#8E8E93");
+    // Default theme-resolved unselected colour (used when IconColor/TextColor are null).
+    private Color _defaultUnselectedColor = Color.FromArgb("#8E8E93");
     private Brush _glassBrush = Brush.Transparent;
     private Color _glassStroke = Colors.Transparent;
 
@@ -130,7 +203,7 @@ public partial class MauiGlassTabBar : ContentView
     {
         bool isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
 
-        _unselectedColor = isDark
+        _defaultUnselectedColor = isDark
             ? Color.FromArgb("#98989E")
             : Color.FromArgb("#8E8E93");
 
@@ -188,7 +261,8 @@ public partial class MauiGlassTabBar : ContentView
     private TabViewState CreateTabView(TabItem item, int index)
     {
         bool isSelected = index == SelectedIndex;
-        Color iconColor = isSelected ? AccentColor : _unselectedColor;
+        Color iconColor = GetEffectiveIconColor(isSelected);
+        Color textColor = GetEffectiveTextColor(isSelected);
 
         // ── Icon ─────────────────────────────────────────────────────────────
         View icon = CreateIcon(item, iconColor);
@@ -235,7 +309,7 @@ public partial class MauiGlassTabBar : ContentView
             FontSize = 10,
             HorizontalOptions = LayoutOptions.Center,
             HorizontalTextAlignment = TextAlignment.Center,
-            TextColor = isSelected ? AccentColor : _unselectedColor,
+            TextColor = textColor,
         };
 
         // ── Stack (icon + label) ─────────────────────────────────────────────
@@ -357,7 +431,8 @@ public partial class MauiGlassTabBar : ContentView
 
     private void ApplyTabVisualState(TabViewState state, bool isSelected)
     {
-        Color iconColor = isSelected ? AccentColor : _unselectedColor;
+        Color iconColor = GetEffectiveIconColor(isSelected);
+        Color textColor = GetEffectiveTextColor(isSelected);
 
         // Pill background
         state.Pill.Background = isSelected
@@ -371,8 +446,22 @@ public partial class MauiGlassTabBar : ContentView
             img.Opacity = isSelected ? 1.0 : 0.55;
 
         // Label colour
-        state.Label.TextColor = iconColor;
+        state.Label.TextColor = textColor;
     }
+
+    // ── Colour helpers ──────────────────────────────────────────────────────
+
+    /// <summary>Returns the effective icon colour, respecting explicit overrides.</summary>
+    private Color GetEffectiveIconColor(bool isSelected) =>
+        isSelected
+            ? (SelectedIconColor ?? AccentColor)
+            : (IconColor ?? _defaultUnselectedColor);
+
+    /// <summary>Returns the effective text colour, respecting explicit overrides.</summary>
+    private Color GetEffectiveTextColor(bool isSelected) =>
+        isSelected
+            ? (SelectedTextColor ?? AccentColor)
+            : (TextColor ?? _defaultUnselectedColor);
 
     // ── Helper types ─────────────────────────────────────────────────────────
 
