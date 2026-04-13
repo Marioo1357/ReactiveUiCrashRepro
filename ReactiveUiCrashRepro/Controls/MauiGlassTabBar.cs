@@ -30,7 +30,7 @@ namespace ReactiveUiCrashRepro.Controls;
 /// </list>
 /// </para>
 /// </summary>
-public class MauiGlassTabBar : ContentView
+public partial class MauiGlassTabBar : ContentView
 {
     // ── Bindable properties ─────────────────────────────────────────────────
 
@@ -91,7 +91,6 @@ public class MauiGlassTabBar : ContentView
 
     // ── Private state ────────────────────────────────────────────────────────
 
-    private readonly Grid _tabGrid;
     private readonly List<TabViewState> _tabStates = new();
 
     // Colours resolved for the current app theme.
@@ -103,58 +102,26 @@ public class MauiGlassTabBar : ContentView
 
     public MauiGlassTabBar()
     {
-        _tabGrid = new Grid
-        {
-            ColumnSpacing = 4,
-            HorizontalOptions = LayoutOptions.Fill,
-            VerticalOptions = LayoutOptions.Center,
-        };
-
         ResolveThemeColors();
-        BuildLayout();
+        InitializeComponent();
+        ApplyThemeToGlassBorder();
 
         // Re-resolve colours when the theme changes at runtime.
         if (Application.Current != null)
             Application.Current.RequestedThemeChanged += (_, _) =>
             {
                 ResolveThemeColors();
-                RefreshGlassBorder();
+                ApplyThemeToGlassBorder();
                 UpdateSelectionVisuals();
             };
     }
 
     // ── Layout ───────────────────────────────────────────────────────────────
 
-    private Border? _glassBorder;
-
-    private void BuildLayout()
+    private void ApplyThemeToGlassBorder()
     {
-        _glassBorder = new Border
-        {
-            StrokeShape = new RoundRectangle { CornerRadius = 26 },
-            Stroke = new SolidColorBrush(_glassStroke),
-            StrokeThickness = 1,
-            Background = _glassBrush,
-            Shadow = new Shadow
-            {
-                Brush = Colors.Black,
-                Opacity = 0.12f,
-                Radius = 14,
-                Offset = new Point(0, -2),
-            },
-            Padding = new Thickness(8, 6),
-            Margin = new Thickness(12, 0, 12, 6),
-            Content = _tabGrid,
-        };
-
-        Content = _glassBorder;
-    }
-
-    private void RefreshGlassBorder()
-    {
-        if (_glassBorder == null) return;
-        _glassBorder.Background = _glassBrush;
-        _glassBorder.Stroke = new SolidColorBrush(_glassStroke);
+        GlassBorder.Background = _glassBrush;
+        GlassBorder.Stroke = new SolidColorBrush(_glassStroke);
     }
 
     // ── Theme helpers ────────────────────────────────────────────────────────
@@ -198,8 +165,8 @@ public class MauiGlassTabBar : ContentView
 
     private void RebuildTabs()
     {
-        _tabGrid.Children.Clear();
-        _tabGrid.ColumnDefinitions.Clear();
+        TabGrid.Children.Clear();
+        TabGrid.ColumnDefinitions.Clear();
         _tabStates.Clear();
 
         var items = Items;
@@ -207,11 +174,11 @@ public class MauiGlassTabBar : ContentView
 
         for (int i = 0; i < items.Count; i++)
         {
-            _tabGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            TabGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
 
             var state = CreateTabView(items[i], i);
             Grid.SetColumn(state.Pill, i);
-            _tabGrid.Children.Add(state.Pill);
+            TabGrid.Children.Add(state.Pill);
             _tabStates.Add(state);
         }
 
