@@ -14,7 +14,7 @@
         The tab bar does NOT drive navigation — bind SelectedIndex in your VM to react to
         selection changes and swap content yourself.
 
-        Platform logic (see code-behind):
+        The TabBar control automatically picks the right implementation:
           • iOS 26+   → NativeTabBar  (native UITabBar with automatic Liquid Glass)
           • iOS < 26  → MauiGlassTabBar (pure MAUI frosted-glass look-alike)
           • Android   → MauiGlassTabBar
@@ -63,12 +63,11 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- ── Tab bar placeholder ──────────────────────────────── -->
-        <!--
-            The actual control (NativeTabBar or MauiGlassTabBar) is injected in
-            code-behind based on platform and OS version.  See MainPage.xaml.cs.
-        -->
-        <ContentView x:Name="TabBarContainer" Grid.Row="1" />
+        <!-- ── Tab bar ───────────────────────────────────────────── -->
+        <controls:TabBar
+            Grid.Row="1"
+            Items="{Binding TabItems}"
+            SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}" />
 
     </Grid>
 
