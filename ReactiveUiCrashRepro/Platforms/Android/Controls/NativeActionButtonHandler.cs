@@ -16,8 +16,7 @@ public partial class NativeActionButtonHandler
 
     protected override Android.Widget.Button CreatePlatformView()
     {
-        // We create a dummy Button as the base (required by the handler type).
-        // The actual content is a vertical LinearLayout added as an overlay.
+        // We use Android's Button with compound drawables to place the icon above the text.
         var button = new Android.Widget.Button(Context!);
         ConfigureAppearance(button);
 

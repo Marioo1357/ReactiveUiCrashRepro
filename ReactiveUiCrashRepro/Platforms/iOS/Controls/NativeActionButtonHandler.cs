@@ -90,10 +90,6 @@ public partial class NativeActionButtonHandler
             config.Title = virtualView.Text;
 
             // Use a smaller font for the label below the icon.
-            var attributes = new UIStringAttributes
-            {
-                Font = UIFont.SystemFontOfSize(10),
-            };
             config.TitleTextAttributesTransformer = original =>
             {
                 original.Font = UIFont.SystemFontOfSize(10);
