@@ -6,7 +6,7 @@
 
     <Border
         x:Name="GlassBorder"
-        Padding="16,12"
+        Padding="10,8"
         StrokeThickness="1">
 
         <Border.StrokeShape>
@@ -21,10 +21,10 @@
                 Radius="8" />
         </Border.Shadow>
 
-        <HorizontalStackLayout
+        <VerticalStackLayout
             x:Name="ContentStack"
             HorizontalOptions="Center"
-            Spacing="8"
+            Spacing="2"
             VerticalOptions="Center" />
 
     </Border>

@@ -104,7 +104,8 @@
                 Grid.Column="1"
                 Icon="house.fill"
                 IconGeometry="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"
-                Text="Button" />
+                MauiIconSource="tab_home.png"
+                Text="Home" />
 
         </Grid>
         <!--  ── Tab bar ─────────────────────────────────────────────  -->

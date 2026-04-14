@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui.Behaviors;
 using Microsoft.Maui.Controls.Shapes;
 
 namespace ReactiveUiCrashRepro.Controls;
@@ -265,7 +266,7 @@ public partial class MauiGlassTabBar : ContentView
         Color textColor = GetEffectiveTextColor(isSelected);
 
         // ── Icon ─────────────────────────────────────────────────────────────
-        View icon = CreateIcon(item, iconColor);
+        View icon = CreateIcon(item, iconColor, out var tintBehavior);
 
         // ── Badge ────────────────────────────────────────────────────────────
         View iconWithBadge;
@@ -346,11 +347,14 @@ public partial class MauiGlassTabBar : ContentView
             Icon = icon,
             Label = label,
             Badge = badge,
+            TintBehavior = tintBehavior,
         };
     }
 
-    private static View CreateIcon(TabItem item, Color color)
+    private static View CreateIcon(TabItem item, Color color, out IconTintColorBehavior? tintBehavior)
     {
+        tintBehavior = null;
+
         // 1) Prefer IconGeometry (SVG path data → Shapes.Path with fill-colour control).
         if (!string.IsNullOrEmpty(item.IconGeometry))
         {
@@ -369,27 +373,35 @@ public partial class MauiGlassTabBar : ContentView
         }
 
         // 2) MauiIconSource (any ImageSource – file, font-glyph, URI).
+        //    Tinted via IconTintColorBehavior from CommunityToolkit.Maui.
         if (item.MauiIconSource != null)
         {
-            return new Image
+            tintBehavior = new IconTintColorBehavior { TintColor = color };
+            var image = new Image
             {
                 Source = item.MauiIconSource,
                 WidthRequest = 24,
                 HeightRequest = 24,
                 HorizontalOptions = LayoutOptions.Center,
             };
+            image.Behaviors.Add(tintBehavior);
+            return image;
         }
 
         // 3) Fallback: treat Icon string as a filename.
+        //    Also tinted via IconTintColorBehavior.
         if (!string.IsNullOrEmpty(item.Icon))
         {
-            return new Image
+            tintBehavior = new IconTintColorBehavior { TintColor = color };
+            var image = new Image
             {
                 Source = item.Icon,
                 WidthRequest = 24,
                 HeightRequest = 24,
                 HorizontalOptions = LayoutOptions.Center,
             };
+            image.Behaviors.Add(tintBehavior);
+            return image;
         }
 
         // 4) Nothing – invisible placeholder.
@@ -442,6 +454,8 @@ public partial class MauiGlassTabBar : ContentView
         // Icon colour
         if (state.Icon is Microsoft.Maui.Controls.Shapes.Path path)
             path.Fill = new SolidColorBrush(iconColor);
+        else if (state.TintBehavior != null)
+            state.TintBehavior.TintColor = iconColor;
         else if (state.Icon is Image img)
             img.Opacity = isSelected ? 1.0 : 0.55;
 
@@ -471,5 +485,6 @@ public partial class MauiGlassTabBar : ContentView
         public required View Icon { get; init; }
         public required Label Label { get; init; }
         public Border? Badge { get; init; }
+        public IconTintColorBehavior? TintBehavior { get; init; }
     }
 }

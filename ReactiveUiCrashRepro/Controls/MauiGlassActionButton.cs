@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using CommunityToolkit.Maui.Behaviors;
 using Microsoft.Maui.Controls.Shapes;
 
 namespace ReactiveUiCrashRepro.Controls;
@@ -15,7 +16,7 @@ namespace ReactiveUiCrashRepro.Controls;
 /// <list type="bullet">
 ///   <item>Semi-transparent frosted-glass background with a subtle gradient.</item>
 ///   <item>Rounded pill container with a thin glass-edge stroke and a soft shadow.</item>
-///   <item>Icon (optional) + text laid out in a horizontal stack.</item>
+///   <item>Icon (optional) + text laid out in a vertical stack (icon on top, text below).</item>
 /// </list>
 /// </para>
 /// <para>
@@ -25,8 +26,10 @@ namespace ReactiveUiCrashRepro.Controls;
 ///   <item><see cref="IconGeometry"/> – SVG path data rendered as a
 ///         <c>Shapes.Path</c> with full fill-colour control.</item>
 ///   <item><see cref="MauiIconSource"/> – any MAUI <c>ImageSource</c>
-///         (file, font-glyph, URI).</item>
-///   <item><see cref="Icon"/> – treated as a <c>FileImageSource</c> filename.</item>
+///         (file, font-glyph, URI).  Tinted with <see cref="AccentColor"/>
+///         (or <see cref="TextColor"/>) via <c>IconTintColorBehavior</c>.</item>
+///   <item><see cref="Icon"/> – treated as a <c>FileImageSource</c> filename,
+///         also tinted via <c>IconTintColorBehavior</c>.</item>
 /// </list>
 /// </para>
 /// </summary>
@@ -138,6 +141,7 @@ public partial class MauiGlassActionButton : ContentView
     /// <summary>
     /// Accent colour used as the default content colour when <see cref="TextColor"/>
     /// is not explicitly set.  Defaults to iOS system blue (<c>#007AFF</c>).
+    /// Also used as the tint colour for image-based icons.
     /// </summary>
     public Color AccentColor
     {
@@ -176,6 +180,7 @@ public partial class MauiGlassActionButton : ContentView
 
     private View? _iconView;
     private Label? _label;
+    private IconTintColorBehavior? _tintBehavior;
     private Brush _glassBrush = Brush.Transparent;
     private Color _glassStroke = Colors.Transparent;
 
@@ -251,6 +256,7 @@ public partial class MauiGlassActionButton : ContentView
         ContentStack.Children.Clear();
         _iconView = null;
         _label = null;
+        _tintBehavior = null;
 
         Color contentColor = GetEffectiveContentColor();
 
@@ -265,9 +271,9 @@ public partial class MauiGlassActionButton : ContentView
             _label = new Label
             {
                 Text = Text,
-                FontSize = 16,
-                FontAttributes = FontAttributes.Bold,
-                VerticalOptions = LayoutOptions.Center,
+                FontSize = 10,
+                HorizontalOptions = LayoutOptions.Center,
+                HorizontalTextAlignment = TextAlignment.Center,
                 TextColor = contentColor,
             };
             ContentStack.Children.Add(_label);
@@ -286,39 +292,56 @@ public partial class MauiGlassActionButton : ContentView
             {
                 Data = geometry,
                 Fill = new SolidColorBrush(color),
-                WidthRequest = 20,
-                HeightRequest = 20,
+                WidthRequest = 22,
+                HeightRequest = 22,
                 Aspect = Stretch.Uniform,
-                VerticalOptions = LayoutOptions.Center,
+                HorizontalOptions = LayoutOptions.Center,
             };
         }
 
         // 2) MauiIconSource (any ImageSource – file, font-glyph, URI).
+        //    Tinted via IconTintColorBehavior from CommunityToolkit.Maui.
         if (MauiIconSource != null)
         {
-            return new Image
+            var image = new Image
             {
                 Source = MauiIconSource,
-                WidthRequest = 20,
-                HeightRequest = 20,
-                VerticalOptions = LayoutOptions.Center,
+                WidthRequest = 22,
+                HeightRequest = 22,
+                HorizontalOptions = LayoutOptions.Center,
             };
+            ApplyTintBehavior(image, color);
+            return image;
         }
 
         // 3) Fallback: treat Icon string as a filename.
+        //    Also tinted via IconTintColorBehavior.
         if (!string.IsNullOrEmpty(Icon))
         {
-            return new Image
+            var image = new Image
             {
                 Source = Icon,
-                WidthRequest = 20,
-                HeightRequest = 20,
-                VerticalOptions = LayoutOptions.Center,
+                WidthRequest = 22,
+                HeightRequest = 22,
+                HorizontalOptions = LayoutOptions.Center,
             };
+            ApplyTintBehavior(image, color);
+            return image;
         }
 
         // 4) Nothing – no icon.
         return null;
+    }
+
+    /// <summary>
+    /// Attaches an <see cref="IconTintColorBehavior"/> to the given image
+    /// so that MAUI resource images (e.g. <c>tab_home.png</c>) are tinted
+    /// with the current content colour.
+    /// </summary>
+    private void ApplyTintBehavior(Image image, Color tintColor)
+    {
+        _tintBehavior = new IconTintColorBehavior { TintColor = tintColor };
+        image.Behaviors.Add(_tintBehavior);
     }
 
     // ── Visuals ──────────────────────────────────────────────────────────────
@@ -331,6 +354,8 @@ public partial class MauiGlassActionButton : ContentView
         // Icon colour
         if (_iconView is Microsoft.Maui.Controls.Shapes.Path path)
             path.Fill = new SolidColorBrush(contentColor);
+        else if (_tintBehavior != null)
+            _tintBehavior.TintColor = contentColor;
 
         // Label colour
         if (_label != null)
