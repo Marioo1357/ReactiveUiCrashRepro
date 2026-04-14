@@ -13,16 +13,16 @@
         Layout: content fills the top row; the tab bar sits at the bottom.
         The tab bar does NOT drive navigation — bind SelectedIndex in your VM to react to
         selection changes and swap content yourself.
-
+        
         The TabBar control automatically picks the right implementation:
-          • iOS 26+   → NativeTabBar  (native UITabBar with automatic Liquid Glass)
-          • iOS < 26  → MauiGlassTabBar (pure MAUI frosted-glass look-alike)
-          • Android   → MauiGlassTabBar
+        • iOS 26+   → NativeTabBar  (native UITabBar with automatic Liquid Glass)
+        • iOS < 26  → MauiGlassTabBar (pure MAUI frosted-glass look-alike)
+        • Android   → MauiGlassTabBar
     -->
-    <Grid RowDefinitions="*, Auto">
+    <Grid RowDefinitions="*">
 
-        <!-- ── Content area ─────────────────────────────────────── -->
-        <ScrollView Grid.Row="0">
+        <!--  ── Content area ───────────────────────────────────────  -->
+        <ScrollView VerticalOptions="Fill">
             <VerticalStackLayout
                 Padding="30,0"
                 Spacing="25">
@@ -53,8 +53,35 @@
                     Command="{Binding ClickCommand2, Mode=OneTime}"
                     HorizontalOptions="Fill"
                     Text="Button 2" />
+                <Button
+                    Command="{Binding ClickCommand1, Mode=OneTime}"
+                    HorizontalOptions="Fill"
+                    Text="Button 1" />
 
-                <!-- Shows the currently selected tab name -->
+                <Button
+                    Command="{Binding ClickCommand2, Mode=OneTime}"
+                    HorizontalOptions="Fill"
+                    Text="Button 2" />
+                <Button
+                    Command="{Binding ClickCommand1, Mode=OneTime}"
+                    HorizontalOptions="Fill"
+                    Text="Button 1" />
+
+                <Button
+                    Command="{Binding ClickCommand2, Mode=OneTime}"
+                    HorizontalOptions="Fill"
+                    Text="Button 2" />
+                <Button
+                    Command="{Binding ClickCommand1, Mode=OneTime}"
+                    HorizontalOptions="Fill"
+                    Text="Button 1" />
+
+                <Button
+                    Command="{Binding ClickCommand2, Mode=OneTime}"
+                    HorizontalOptions="Fill"
+                    Text="Button 2" />
+
+                <!--  Shows the currently selected tab name  -->
                 <Label
                     FontAttributes="Bold"
                     HorizontalOptions="Center"
@@ -63,12 +90,24 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- ── Tab bar ───────────────────────────────────────────── -->
-        <controls:TabBar
-            Grid.Row="1"
-            Items="{Binding TabItems}"
-            SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}" />
+        <Grid
+            Margin="16,24"
+            ColumnDefinitions="4*, *"
+            VerticalOptions="End">
 
+            <controls:TabBar
+                Grid.Column="0"
+                Items="{Binding TabItems}"
+                SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}" />
+
+            <controls:ActionButton
+                Grid.Column="1"
+                Icon="house.fill"
+                IconGeometry="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"
+                Text="Button" />
+
+        </Grid>
+        <!--  ── Tab bar ─────────────────────────────────────────────  -->
     </Grid>
 
 </reactive:ReactiveContentPage>
