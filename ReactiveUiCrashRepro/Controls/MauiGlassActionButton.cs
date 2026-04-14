@@ -3,33 +3,6 @@ using Microsoft.Maui.Controls.Shapes;
 
 namespace ReactiveUiCrashRepro.Controls;
 
-/// <summary>
-/// A pure-MAUI action button that mimics the iOS 26 Liquid Glass appearance.
-/// <para>
-/// Used on <b>Android</b> (always) and on <b>iOS &lt; 26</b> (where the native Liquid
-/// Glass material is not available).  The control renders entirely with MAUI
-/// components – no platform-specific code is required.
-/// </para>
-/// <para>
-/// Visual design:
-/// <list type="bullet">
-///   <item>Semi-transparent frosted-glass background with a subtle gradient.</item>
-///   <item>Rounded pill container with a thin glass-edge stroke and a soft shadow.</item>
-///   <item>Icon (optional) + text laid out in a horizontal stack.</item>
-/// </list>
-/// </para>
-/// <para>
-/// <b>Icons</b> – each button can provide icons in several ways
-/// (checked in this order):
-/// <list type="number">
-///   <item><see cref="IconGeometry"/> – SVG path data rendered as a
-///         <c>Shapes.Path</c> with full fill-colour control.</item>
-///   <item><see cref="MauiIconSource"/> – any MAUI <c>ImageSource</c>
-///         (file, font-glyph, URI).</item>
-///   <item><see cref="Icon"/> – treated as a <c>FileImageSource</c> filename.</item>
-/// </list>
-/// </para>
-/// </summary>
 public partial class MauiGlassActionButton : ContentView
 {
     // ── Bindable properties ─────────────────────────────────────────────────

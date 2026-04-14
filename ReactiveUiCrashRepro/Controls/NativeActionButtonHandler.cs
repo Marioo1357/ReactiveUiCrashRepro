@@ -22,13 +22,13 @@ public partial class NativeActionButtonHandler : ViewHandler<NativeActionButton,
         {
             [nameof(NativeActionButton.Text)] = MapText,
             [nameof(NativeActionButton.Icon)] = MapIcon,
+            [nameof(NativeActionButton.ForegroundColor)] = MapIcon,
         };
 
     public NativeActionButtonHandler() : base(Mapper) { }
 
     public NativeActionButtonHandler(IPropertyMapper mapper) : base(mapper) { }
-
-    // ── Static mapper stubs (delegates to the partial implementations) ───────
+    
 
     private static void MapText(NativeActionButtonHandler handler, NativeActionButton view) =>
         handler.UpdateText(view);
