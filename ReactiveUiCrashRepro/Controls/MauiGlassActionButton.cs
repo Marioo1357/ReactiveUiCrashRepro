@@ -50,22 +50,6 @@ public partial class MauiGlassActionButton : ContentView
             defaultValue: null,
             propertyChanged: (b, _, _) => ((MauiGlassActionButton)b).RebuildContent());
 
-    public static readonly BindableProperty IconGeometryProperty =
-        BindableProperty.Create(
-            nameof(IconGeometry),
-            typeof(string),
-            typeof(MauiGlassActionButton),
-            defaultValue: null,
-            propertyChanged: (b, _, _) => ((MauiGlassActionButton)b).RebuildContent());
-
-    public static readonly BindableProperty MauiIconSourceProperty =
-        BindableProperty.Create(
-            nameof(MauiIconSource),
-            typeof(ImageSource),
-            typeof(MauiGlassActionButton),
-            defaultValue: null,
-            propertyChanged: (b, _, _) => ((MauiGlassActionButton)b).RebuildContent());
-
     public static readonly BindableProperty AccentColorProperty =
         BindableProperty.Create(
             nameof(AccentColor),
@@ -113,26 +97,6 @@ public partial class MauiGlassActionButton : ContentView
     {
         get => (string?)GetValue(IconProperty);
         set => SetValue(IconProperty, value);
-    }
-
-    /// <summary>
-    /// SVG path-data string for rendering the icon as a MAUI <c>Shapes.Path</c>.
-    /// Gives full fill-colour control.
-    /// </summary>
-    public string? IconGeometry
-    {
-        get => (string?)GetValue(IconGeometryProperty);
-        set => SetValue(IconGeometryProperty, value);
-    }
-
-    /// <summary>
-    /// Optional MAUI <see cref="ImageSource"/> for the icon.
-    /// Checked after <see cref="IconGeometry"/>.
-    /// </summary>
-    public ImageSource? MauiIconSource
-    {
-        get => (ImageSource?)GetValue(MauiIconSourceProperty);
-        set => SetValue(MauiIconSourceProperty, value);
     }
 
     /// <summary>
@@ -276,35 +240,6 @@ public partial class MauiGlassActionButton : ContentView
 
     private View? CreateIcon(Color color)
     {
-        // 1) Prefer IconGeometry (SVG path data → Shapes.Path with fill-colour control).
-        if (!string.IsNullOrEmpty(IconGeometry))
-        {
-            var converter = new PathGeometryConverter();
-            var geometry = (Geometry?)converter.ConvertFromInvariantString(IconGeometry);
-
-            return new Microsoft.Maui.Controls.Shapes.Path
-            {
-                Data = geometry,
-                Fill = new SolidColorBrush(color),
-                WidthRequest = 20,
-                HeightRequest = 20,
-                Aspect = Stretch.Uniform,
-                VerticalOptions = LayoutOptions.Center,
-            };
-        }
-
-        // 2) MauiIconSource (any ImageSource – file, font-glyph, URI).
-        if (MauiIconSource != null)
-        {
-            return new Image
-            {
-                Source = MauiIconSource,
-                WidthRequest = 20,
-                HeightRequest = 20,
-                VerticalOptions = LayoutOptions.Center,
-            };
-        }
-
         // 3) Fallback: treat Icon string as a filename.
         if (!string.IsNullOrEmpty(Icon))
         {

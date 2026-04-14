@@ -42,20 +42,6 @@ public class ActionButton : ContentView
             typeof(ActionButton),
             defaultValue: null);
 
-    public static readonly BindableProperty IconGeometryProperty =
-        BindableProperty.Create(
-            nameof(IconGeometry),
-            typeof(string),
-            typeof(ActionButton),
-            defaultValue: null);
-
-    public static readonly BindableProperty MauiIconSourceProperty =
-        BindableProperty.Create(
-            nameof(MauiIconSource),
-            typeof(ImageSource),
-            typeof(ActionButton),
-            defaultValue: null);
-
     public static readonly BindableProperty AccentColorProperty =
         BindableProperty.Create(
             nameof(AccentColor),
@@ -105,28 +91,7 @@ public class ActionButton : ContentView
         get => (string?)GetValue(IconProperty);
         set => SetValue(IconProperty, value);
     }
-
-    /// <summary>
-    /// SVG path-data string for rendering the icon as a MAUI <c>Shapes.Path</c>.
-    /// Used by <see cref="MauiGlassActionButton"/> which gives full fill-colour control.
-    /// </summary>
-    public string? IconGeometry
-    {
-        get => (string?)GetValue(IconGeometryProperty);
-        set => SetValue(IconGeometryProperty, value);
-    }
-
-    /// <summary>
-    /// Optional MAUI <see cref="ImageSource"/> for the icon.
-    /// Used by <see cref="MauiGlassActionButton"/> as a fallback when
-    /// <see cref="IconGeometry"/> is not set.
-    /// </summary>
-    public ImageSource? MauiIconSource
-    {
-        get => (ImageSource?)GetValue(MauiIconSourceProperty);
-        set => SetValue(MauiIconSourceProperty, value);
-    }
-
+    
     /// <summary>
     /// Accent colour used as the default content colour for the MAUI glass implementation.
     /// Defaults to iOS system blue (<c>#007AFF</c>).
@@ -209,10 +174,6 @@ public class ActionButton : ContentView
             new Binding(nameof(Text), source: this));
         glass.SetBinding(MauiGlassActionButton.IconProperty,
             new Binding(nameof(Icon), source: this));
-        glass.SetBinding(MauiGlassActionButton.IconGeometryProperty,
-            new Binding(nameof(IconGeometry), source: this));
-        glass.SetBinding(MauiGlassActionButton.MauiIconSourceProperty,
-            new Binding(nameof(MauiIconSource), source: this));
 
         // Style bindings
         glass.SetBinding(MauiGlassActionButton.AccentColorProperty,

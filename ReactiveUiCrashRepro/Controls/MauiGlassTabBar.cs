@@ -351,35 +351,6 @@ public partial class MauiGlassTabBar : ContentView
 
     private static View CreateIcon(TabItem item, Color color)
     {
-        // 1) Prefer IconGeometry (SVG path data → Shapes.Path with fill-colour control).
-        if (!string.IsNullOrEmpty(item.IconGeometry))
-        {
-            var converter = new PathGeometryConverter();
-            var geometry = (Geometry?)converter.ConvertFromInvariantString(item.IconGeometry);
-
-            return new Microsoft.Maui.Controls.Shapes.Path
-            {
-                Data = geometry,
-                Fill = new SolidColorBrush(color),
-                WidthRequest = 24,
-                HeightRequest = 24,
-                Aspect = Stretch.Uniform,
-                HorizontalOptions = LayoutOptions.Center,
-            };
-        }
-
-        // 2) MauiIconSource (any ImageSource – file, font-glyph, URI).
-        if (item.MauiIconSource != null)
-        {
-            return new Image
-            {
-                Source = item.MauiIconSource,
-                WidthRequest = 24,
-                HeightRequest = 24,
-                HorizontalOptions = LayoutOptions.Center,
-            };
-        }
-
         // 3) Fallback: treat Icon string as a filename.
         if (!string.IsNullOrEmpty(item.Icon))
         {

@@ -22,6 +22,12 @@ public partial class NativeActionButtonHandler
 {
     // ── Handler lifecycle ────────────────────────────────────────────────────
 
+    public static UIButton GetUIButton(NativeActionButton virtualView)
+    {
+        var handler = new NativeActionButtonHandler();
+        return handler.CreatePlatformView();
+    }
+
     protected override UIButton CreatePlatformView()
     {
         var button = new UIButton(UIButtonType.System);
@@ -49,9 +55,24 @@ public partial class NativeActionButtonHandler
     /// </summary>
     private static void ConfigureAppearance(UIButton button)
     {
-        var config = UIButtonConfiguration.FilledButtonConfiguration;
+        var config = UIButtonConfiguration.PlainButtonConfiguration;
+        config.Background.BackgroundColor = UIColor.Clear;
         config.CornerStyle = UIButtonConfigurationCornerStyle.Capsule;
+        config.ImagePlacement = NSDirectionalRectEdge.Top;
+        config.ImagePadding = 4;
+        config.TitleAlignment = UIButtonConfigurationTitleAlignment.Center;
         button.Configuration = config;
+        
+        // var blur = UIBlurEffect.FromStyle(UIBlurEffectStyle.SystemUltraThinMaterial);
+        // var blurView = new UIVisualEffectView(blur);
+        //
+        // blurView.Frame = button.Bounds;
+        // blurView.AutoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight;
+        //
+        // button.InsertSubview(blurView, 0);
+        //
+        button.Layer.CornerRadius = 24;
+        button.ClipsToBounds = true;
     }
 
     // ── Event handling ───────────────────────────────────────────────────────
