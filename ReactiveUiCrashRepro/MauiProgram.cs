@@ -23,6 +23,7 @@ public static class MauiProgram
 #if IOS || ANDROID
                 handlers.AddHandler<NativeTabBar, NativeTabBarHandler>();
                 handlers.AddHandler<NativeActionButton, NativeActionButtonHandler>();
+                handlers.AddHandler<NativeNavigationBar, NativeNavigationBarHandler>();
 #endif
             });
 
