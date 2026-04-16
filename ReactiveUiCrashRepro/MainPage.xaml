@@ -27,6 +27,9 @@
                 Padding="30,0"
                 Spacing="25">
 
+                <!--  Spacer so content does not start behind the nav bar  -->
+                <BoxView HeightRequest="60" Color="Transparent" />
+
                 <Image
                     Aspect="AspectFit"
                     HeightRequest="185"
@@ -89,6 +92,14 @@
 
             </VerticalStackLayout>
         </ScrollView>
+
+        <!--  ── Navigation bar ──────────────────────────────────────────  -->
+        <controls:NavigationBar
+            Margin="16,12"
+            Title="Home"
+            Action1Icon="tab_search.png"
+            Action2Icon="tab_star.png"
+            VerticalOptions="Start" />
 
         <Grid
             Margin="16,24"
